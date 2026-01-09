@@ -1,0 +1,101 @@
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <string>
+
+using namespace std;
+
+struct Order {
+    int orderID;
+    string customerName;
+    int numItems;
+    double pricePerItem;
+    double totalBill;
+};
+
+int main() {
+    vector<Order> orderList;
+    int totalOrders;
+    const double PRIORITY_THRESHOLD = 5000.0;
+
+    cout << "Enter the total number of orders to process: ";
+    cin >> totalOrders;
+
+    for (int i = 0; i < totalOrders; ++i) {
+        Order currentOrder;
+        cout << "\nEnter details for Order #" << (i + 1) << ":" << endl;
+
+        cout << "Order ID: ";
+        cin >> currentOrder.orderID;
+
+        cin.ignore(); 
+
+        cout << "Customer Name: ";
+        getline(cin, currentOrder.customerName);
+
+        do {
+            cout << "Number of Items: ";
+            cin >> currentOrder.numItems;
+            if (currentOrder.numItems <= 0) {
+                cout << "Error: Must be at least 1 item.\n";
+            }
+        } while (currentOrder.numItems <= 0);
+
+        do {
+            cout << "Price per Item: ";
+            cin >> currentOrder.pricePerItem;
+            if (currentOrder.pricePerItem <= 0) {
+                cout << "Error: Price must be positive.\n";
+            }
+        } while (currentOrder.pricePerItem <= 0);
+
+        currentOrder.totalBill = currentOrder.numItems * currentOrder.pricePerItem;
+        
+        orderList.push_back(currentOrder);
+    }
+    ofstream outFile("priority_orders.txt");
+
+    if (!outFile.is_open()) {
+        cerr << "Error: Unable to create or open 'priority_orders.txt'!" << endl;
+        return 1;
+    }
+
+    int priorityCount = 0;
+    cout << "\nProcessing orders..." << endl;
+
+    for (const auto& ord : orderList) {
+        if (ord.totalBill > PRIORITY_THRESHOLD) {
+            outFile << ord.orderID << " " 
+                    << ord.customerName << " " 
+                    << ord.totalBill << endl;
+            priorityCount++;
+        }
+    }
+    
+    outFile.close();
+    cout << "Saved " << priorityCount << " priority orders to file." << endl;
+
+    cout << "\n--- Priority Orders Report (Total > " << PRIORITY_THRESHOLD << ") ---" << endl;
+    
+    ifstream inFile("priority_orders.txt");
+
+    if (!inFile.is_open()) {
+        cerr << "Error: Unable to read 'priority_orders.txt'!" << endl;
+        return 1;
+    }
+
+    string line;
+    bool isEmpty = true;
+    
+    while (getline(inFile, line)) {
+        cout << line << endl;
+        isEmpty = false;
+    }
+
+    if (isEmpty) {
+        cout << "No priority orders found in the file." << endl;
+    }
+
+    inFile.close();
+    return 0;
+}
